@@ -1,8 +1,9 @@
 use termion::raw::RawTerminal;
-use std::io::{Read, stdin, Stdin, stdout, Stdout, Write};
+use std::io::{Stdout, Write};
 use termion::event::Key;
 
 use crate::intermediate::IntermediateFile;
+use std::cmp::max;
 
 pub struct Editor {
     pub intermediate_file: IntermediateFile,
@@ -41,6 +42,9 @@ impl Editor {
                 if self.cursor_row < self.intermediate_file.lines.len() as u16 {
                     self.cursor_row += 1;
                     self.line_number += 1;
+                    if self.cursor_col > self.intermediate_file.lines[self.line_number as usize].len() as u16 {
+                        self.cursor_col = max((self.intermediate_file.lines[self.line_number as usize].len() + 1) as u16, 1);
+                    }
 
                 }
             }
@@ -57,13 +61,13 @@ impl Editor {
     pub fn print_lines(&mut self, stdout: &mut RawTerminal<Stdout>) {
         write!(stdout, "{}", termion::cursor::Goto(1, 1)).unwrap();
         for (i, line) in self.intermediate_file.lines.iter().enumerate() {
-            write!(stdout, "{}{}", line, termion::cursor::Goto(1, (i + 2) as u16));
+            write!(stdout, "{}{}", line, termion::cursor::Goto(1, (i + 2) as u16)).unwrap();
         }
         write!(stdout, "{}", termion::cursor::Goto(self.cursor_col, self.cursor_row)).unwrap();
     }
 
     pub fn clear(&mut self, stdout: &mut RawTerminal<Stdout>) {
-        write!(stdout, "{}", termion::clear::All);
+        write!(stdout, "{}", termion::clear::All).unwrap();
     }
 
     pub fn new_line(&mut self) {

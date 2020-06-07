@@ -1,14 +1,11 @@
 extern crate termion;
 
-use std::fs::File;
-use std::io::{Read, stdin, Stdin, stdout, Stdout, Write};
-use std::io;
+use std::io::{stdin, stdout, Write};
 
 // Import the color module.
-use termion::{clear, cursor};
 use termion::event::Key;
-use termion::input::{TermRead, Keys};
-use termion::raw::{IntoRawMode, RawTerminal};
+use termion::input::TermRead;
+use termion::raw::IntoRawMode;
 
 mod editor;
 mod intermediate;
@@ -22,24 +19,9 @@ pub fn run(mut args: std::env::Args) -> Result<(), &'static str> {
         None => return Err("Not enough arguments")
     };
 
-    let mut file = match File::open(filename) {
-        Ok(f) => f,
-        Err(_) => { return Err("Could not open file"); }
-    };
 
-    let mut buffer = Vec::new();
-    loop {
-        match file.read_line() {
-            Ok(Some(line)) => {
-                if line.is_empty() {
-                    break;
-                }
-                buffer.push(line);
-            }
-            _ => { break; }
-        }
-    }
-    let intermediate_file = IntermediateFile { lines: buffer };
+    let intermediate_file = IntermediateFile::open(filename)?;
+
 
     let mut editor = Editor::new(intermediate_file);
 
@@ -53,7 +35,7 @@ pub fn run(mut args: std::env::Args) -> Result<(), &'static str> {
 
 
     for (i, line) in editor.intermediate_file.lines.iter().enumerate() {
-        write!(stdout, "{}{}", line, termion::cursor::Goto(1, (i + 2) as u16));
+        write!(stdout, "{}{}", line, termion::cursor::Goto(1, (i + 2) as u16)).unwrap();
     }
     write!(stdout, "{}", termion::cursor::Goto(editor.cursor_col, editor.cursor_row)).unwrap();
 
