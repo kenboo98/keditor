@@ -25,6 +25,7 @@ struct Editor {
     intermediate_file: IntermediateFile,
     cursor_col: u16,
     cursor_row: u16,
+    line_number: u64
 }
 
 impl Editor {
@@ -33,6 +34,7 @@ impl Editor {
             intermediate_file: file,
             cursor_col: 1,
             cursor_row: 1,
+            line_number: 0
         }
     }
 
@@ -49,16 +51,20 @@ impl Editor {
                 } else if self.cursor_row < self.intermediate_file.lines.len() as u16 {
                     self.cursor_col = 0;
                     self.cursor_row += 1;
+                    self.line_number += 1;
                 }
             }
             Key::Down => {
                 if self.cursor_row < self.intermediate_file.lines.len() as u16 {
-                    self.cursor_row += 1
+                    self.cursor_row += 1;
+                    self.line_number += 1;
+
                 }
             }
             Key::Up => {
                 if self.cursor_row > 1 {
-                    self.cursor_row -= 1
+                    self.cursor_row -= 1;
+                    self.line_number -= 1;
                 }
             }
             _ => {}
@@ -75,6 +81,18 @@ impl Editor {
 
     fn clear(&mut self, stdout: &mut RawTerminal<Stdout>) {
         write!(stdout, "{}", termion::clear::All);
+    }
+
+    fn new_line(&mut self) {
+        let remaining = self.intermediate_file.lines[self.line_number as usize].split_off((self.cursor_col - 1) as usize);
+        self.intermediate_file.lines.insert((self.line_number + 1) as usize, remaining);
+        self.cursor_row += 1;
+        self.cursor_col = 0;
+        self.line_number += 1;
+    }
+    fn write_char(&mut self, c: char) {
+        self.intermediate_file.lines[self.line_number as usize].insert((self.cursor_col - 1) as usize, c);
+        self.cursor_col += 1;
     }
 }
 
@@ -130,7 +148,8 @@ pub fn run(mut args: std::env::Args) -> Result<(), &'static str> {
         // Print the key we type...
         match c.unwrap() {
             // Exit.
-            Key::Char(c) => print!("{}", c),
+            Key::Char('\n') => editor.new_line(),
+            Key::Char(c) => editor.write_char(c),
             Key::Alt(c) => print!("Alt-{}", c),
             Key::Ctrl('c') => {
                 editor.clear(&mut stdout);
