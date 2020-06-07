@@ -52,6 +52,9 @@ impl Editor {
                 if self.cursor_row > 1 {
                     self.cursor_row -= 1;
                     self.line_number -= 1;
+                    if self.cursor_col > self.intermediate_file.lines[self.line_number as usize].len() as u16 {
+                        self.cursor_col = max((self.intermediate_file.lines[self.line_number as usize].len() + 1) as u16, 1);
+                    }
                 }
             }
             _ => {}
