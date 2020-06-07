@@ -10,92 +10,10 @@ use termion::event::Key;
 use termion::input::{TermRead, Keys};
 use termion::raw::{IntoRawMode, RawTerminal};
 
-enum CursorDir {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-struct IntermediateFile {
-    lines: Vec<String>
-}
-
-struct Editor {
-    intermediate_file: IntermediateFile,
-    cursor_col: u16,
-    cursor_row: u16,
-    line_number: u64
-}
-
-impl Editor {
-    fn new(file: IntermediateFile) -> Editor {
-        Editor {
-            intermediate_file: file,
-            cursor_col: 1,
-            cursor_row: 1,
-            line_number: 0
-        }
-    }
-
-    fn move_cursor(&mut self, dir: Key) {
-        match dir {
-            Key::Left => {
-                if self.cursor_col > 1 {
-                    self.cursor_col -= 1
-                }
-            }
-            Key::Right => {
-                if self.intermediate_file.lines[self.cursor_row as usize - 1].len() >= self.cursor_col as usize {
-                    self.cursor_col += 1
-                } else if self.cursor_row < self.intermediate_file.lines.len() as u16 {
-                    self.cursor_col = 0;
-                    self.cursor_row += 1;
-                    self.line_number += 1;
-                }
-            }
-            Key::Down => {
-                if self.cursor_row < self.intermediate_file.lines.len() as u16 {
-                    self.cursor_row += 1;
-                    self.line_number += 1;
-
-                }
-            }
-            Key::Up => {
-                if self.cursor_row > 1 {
-                    self.cursor_row -= 1;
-                    self.line_number -= 1;
-                }
-            }
-            _ => {}
-        }
-    }
-
-    fn print_lines(&mut self, stdout: &mut RawTerminal<Stdout>) {
-        write!(stdout, "{}", termion::cursor::Goto(1, 1)).unwrap();
-        for (i, line) in self.intermediate_file.lines.iter().enumerate() {
-            write!(stdout, "{}{}", line, termion::cursor::Goto(1, (i + 2) as u16));
-        }
-        write!(stdout, "{}", termion::cursor::Goto(self.cursor_col, self.cursor_row)).unwrap();
-    }
-
-    fn clear(&mut self, stdout: &mut RawTerminal<Stdout>) {
-        write!(stdout, "{}", termion::clear::All);
-    }
-
-    fn new_line(&mut self) {
-        let remaining = self.intermediate_file.lines[self.line_number as usize].split_off((self.cursor_col - 1) as usize);
-        self.intermediate_file.lines.insert((self.line_number + 1) as usize, remaining);
-        self.cursor_row += 1;
-        self.cursor_col = 0;
-        self.line_number += 1;
-    }
-    fn write_char(&mut self, c: char) {
-        self.intermediate_file.lines[self.line_number as usize].insert((self.cursor_col - 1) as usize, c);
-        self.cursor_col += 1;
-    }
-}
-
+mod editor;
+mod intermediate;
+use crate::editor::Editor;
+use crate::intermediate::IntermediateFile;
 
 pub fn run(mut args: std::env::Args) -> Result<(), &'static str> {
     args.next();
