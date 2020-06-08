@@ -20,10 +20,10 @@ pub fn run(mut args: std::env::Args) -> Result<(), &'static str> {
     };
 
 
-    let intermediate_file = IntermediateFile::open(filename)?;
+    let file = IntermediateFile::open(filename)?;
 
 
-    let mut editor = Editor::new(intermediate_file);
+    let mut editor = Editor::new(file);
 
 
     let mut stdout = stdout().into_raw_mode().unwrap();
@@ -34,7 +34,7 @@ pub fn run(mut args: std::env::Args) -> Result<(), &'static str> {
            termion::cursor::Goto(1, 1)).unwrap();
 
 
-    for (i, line) in editor.intermediate_file.lines.iter().enumerate() {
+    for (i, line) in editor.file.lines.iter().enumerate() {
         write!(stdout, "{}{}", line, termion::cursor::Goto(1, (i + 2) as u16)).unwrap();
     }
     write!(stdout, "{}", termion::cursor::Goto(editor.cursor_col, editor.cursor_row)).unwrap();
@@ -59,6 +59,7 @@ pub fn run(mut args: std::env::Args) -> Result<(), &'static str> {
             Key::Right => editor.move_cursor(Key::Right),
             Key::Up => editor.move_cursor(Key::Up),
             Key::Down => editor.move_cursor(Key::Down),
+            Key::Backspace => editor.back_space(),
             _ => print!("Other"),
         }
 
