@@ -111,4 +111,8 @@ impl Editor {
             self.file.lines[self.file_row as usize].push_str(removed.as_str());
         }
     }
+
+    pub fn save(&mut self) {
+        self.file.save();
+    }
 }

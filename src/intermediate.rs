@@ -1,5 +1,6 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use termion::input::TermRead;
+use std::io::Write;
 
 pub struct IntermediateFile {
     pub lines: Vec<String>,
@@ -31,5 +32,14 @@ impl IntermediateFile {
                 file_name,
             }
         )
+    }
+
+    pub fn save(&mut self) {
+        let mut file = OpenOptions::new().write(true).truncate(true).open(&self.file_name).unwrap();
+        for line in &self.lines {
+            write!(file, "{}\n", line);
+        }
+        file.flush();
+
     }
 }

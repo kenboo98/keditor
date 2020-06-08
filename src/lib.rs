@@ -51,10 +51,13 @@ pub fn run(mut args: std::env::Args) -> Result<(), &'static str> {
             Key::Char('\n') => editor.new_line(),
             Key::Char(c) => editor.write_char(c),
             Key::Alt(c) => print!("Alt-{}", c),
+            Key::Ctrl('s') => {
+                editor.save();
+            },
             Key::Ctrl('c') => {
                 editor.clear(&mut stdout);
                 return Ok(());
-            }
+            },
             Key::Left => editor.move_cursor(Key::Left),
             Key::Right => editor.move_cursor(Key::Right),
             Key::Up => editor.move_cursor(Key::Up),
